@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>满月间 · 翻牌子</title>
+<style>
+  :root{
+    --night:#14131f;
+    --night-deep:#0e0d17;
+    --cream:#F3ECD2;
+    --cream-dim:#e9e0c4;
+    --orange:#F97028;
+    --yellow:#F0BB0D;
+    --pink:#F489A3;
+    --mint:#A8DADC;
+    --teal:#264653;
+    --ink:#121212;
+    --font-zh:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    font-family:var(--font-zh);
+    background:
+      radial-gradient(1200px 600px at 85% -10%, rgba(240,187,13,.12), transparent 60%),
+      radial-gradient(900px 500px at 10% 110%, rgba(249,112,40,.10), transparent 60%),
+      linear-gradient(180deg,var(--night),var(--night-deep));
+    color:var(--cream);
+    min-height:100%;
+    overflow-x:hidden;
+    user-select:none;
+  }
+  .stars{position:fixed;inset:0;pointer-events:none;z-index:0}
+  .stars span{position:absolute;background:var(--cream);border-radius:50%;opacity:.5;animation:twinkle 3s infinite ease-in-out}
+  @keyframes twinkle{0%,100%{opacity:.15}50%{opacity:.7}}
+  .moon{
+    position:fixed;top:12px;right:12px;width:52px;height:52px;z-index:1;pointer-events:none;
+    filter:drop-shadow(0 0 22px rgba(240,187,13,.45));
+    animation:moonFloat 6s ease-in-out infinite;
+  }
+  @keyframes moonFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
+  .wrap{position:relative;z-index:2;max-width:520px;margin:0 auto;padding:18px 16px 40px}
+  header{text-align:center;padding:14px 0 6px}
+  h1{
+    font-size:clamp(26px,7vw,34px);font-weight:800;letter-spacing:.08em;
+    color:var(--cream);
+  }
+  h1 .accent{color:var(--yellow);display:inline-block;transform:rotate(-3deg)}
+  .sub{margin-top:6px;font-size:13px;color:rgba(243,236,210,.55);letter-spacing:.12em}
+  .hud{
+    display:flex;justify-content:center;gap:10px;margin:16px 0 18px;flex-wrap:wrap;
+  }
+  .hud .chip{
+    background:rgba(243,236,210,.07);
+    border:1px solid rgba(243,236,210,.14);
+    border-radius:999px;padding:6px 14px;font-size:13px;
+    display:flex;gap:6px;align-items:baseline;
+  }
+  .chip b{color:var(--yellow);font-size:15px;font-variant-numeric:tabular-nums}
+  .chip button{
+    background:var(--orange);border:none;color:var(--ink);font-weight:700;
+    border-radius:999px;padding:4px 12px;font-size:13px;cursor:pointer;
+    font-family:var(--font-zh);transition:transform .15s;
+  }
+  .chip button:active{transform:scale(.93)}
+
+  .board{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:10px;
+    perspective:1200px;
+  }
+  .card{
+    position:relative;aspect-ratio:3/4;cursor:pointer;
+    transform:rotate(var(--rot,0deg));
+    transition:transform .25s cubic-bezier(.34,1.56,.64,1), filter .25s;
+    transform-style:preserve-3d;
+  }
+  .card:hover{filter:brightness(1.08)}
+  .card.shake{animation:shake .4s}
+  @keyframes shake{0%,100%{translate:0}25%{translate:-4px 0}75%{translate:4px 0}}
+  .face{
+    position:absolute;inset:0;border-radius:14px;backface-visibility:hidden;
+    -webkit-backface-visibility:hidden;
+    transition:transform .45s cubic-bezier(.34,1.3,.5,1);
+    transform-style:preserve-3d;
+    box-shadow:0 4px 18px rgba(0,0,0,.35);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  }
+  .back{
+    background:var(--cream);
+    transform:rotateY(0deg);
+    overflow:hidden;
+  }
+  .back svg.pat{position:absolute;inset:0;width:100%;height:100%;opacity:.5}
+  .back .moon-mini{width:34%;opacity:.85}
+  .card.flipped .back{transform:rotateY(180deg)}
+  .front{
+    background:var(--card-bg,#fdf6e3);
+    transform:rotateY(180deg);
+    border:2px solid var(--card-accent,var(--orange));
+    padding:6px;
+  }
+  .card.flipped .front{transform:rotateY(360deg)}
+  .front .icon{width:56%;height:auto}
+  .front .name{font-size:12.5px;font-weight:700;color:var(--ink);text-align:center;line-height:1.25}
+  .card.matched{pointer-events:none;animation:matchPop .5s cubic-bezier(.34,1.56,.64,1)}
+  .card.matched .front{
+    box-shadow:0 0 0 2px var(--card-accent),0 0 18px var(--card-accent);
+  }
+  @keyframes matchPop{0%{scale:1}40%{scale:1.12}100%{scale:1}}
+  .card.matched{filter:saturate(1.05)}
+
+  .toast{
+    position:fixed;left:50%;bottom:24px;transform:translate(-50%,80px);
+    background:var(--cream);color:var(--ink);
+    border-radius:14px;padding:12px 18px;max-width:86%;
+    font-size:14px;line-height:1.5;z-index:10;
+    box-shadow:0 8px 30px rgba(0,0,0,.45);
+    transition:transform .35s cubic-bezier(.34,1.56,.64,1), opacity .35s;
+    opacity:0;pointer-events:none;text-align:center;
+  }
+  .toast.show{transform:translate(-50%,0);opacity:1}
+  .toast .who{color:var(--orange);font-weight:800}
+
+  .win{
+    position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;
+    background:rgba(14,13,23,.82);backdrop-filter:blur(6px);
+    opacity:0;pointer-events:none;transition:opacity .5s;padding:20px;
+  }
+  .win.show{opacity:1;pointer-events:auto}
+  .win-box{
+    background:var(--cream);color:var(--ink);border-radius:22px;
+    padding:30px 26px;max-width:380px;text-align:center;width:100%;
+    transform:scale(.8) rotate(-2deg);transition:transform .5s cubic-bezier(.34,1.56,.64,1);
+    box-shadow:0 20px 60px rgba(0,0,0,.5);
+  }
+  .win.show .win-box{transform:scale(1) rotate(0deg)}
+  .win-box .big-moon{width:90px;margin:0 auto 10px;display:block;animation:moonFloat 5s ease-in-out infinite}
+  .win-box h2{font-size:22px;letter-spacing:.06em;margin-bottom:8px}
+  .win-box p{font-size:14px;line-height:1.7;color:#3a3527;margin-bottom:6px}
+  .win-box .stats{font-size:15px;font-weight:700;margin:12px 0 16px;color:var(--teal)}
+  .win-box button{
+    background:var(--orange);color:var(--ink);border:none;border-radius:999px;
+    padding:11px 30px;font-size:15px;font-weight:800;cursor:pointer;font-family:var(--font-zh);
+    transition:transform .15s;letter-spacing:.05em;
+  }
+  .win-box button:active{transform:scale(.94)}
+  footer{text-align:center;margin-top:22px;font-size:11.5px;color:rgba(243,236,210,.35);letter-spacing:.1em;line-height:1.8}
+</style>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+<svg class="moon" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="#F0BB0D"/><circle cx="38" cy="40" r="7" fill="#e0a90b" opacity=".55"/><circle cx="60" cy="58" r="5" fill="#e0a90b" opacity=".45"/><circle cx="52" cy="32" r="3.5" fill="#e0a90b" opacity=".4"/></svg>
+
+<div class="wrap">
+  <header>
+    <h1><span class="accent">满月间</span> · 翻牌子</h1>
+    <div class="sub">馆长夜班特供 · 望舒亲手捏 · 翻完一家团圆</div>
+  </header>
+  <div class="hud">
+    <div class="chip">步数 <b id="moves">0</b></div>
+    <div class="chip">用时 <b id="timer">0:00</b></div>
+    <div class="chip">配对 <b id="pairs">0/8</b></div>
+    <div class="chip"><button id="restart">重新洗牌</button></div>
+  </div>
+  <div class="board" id="board"></div>
+  <footer>八对家当 · 家家有来历<br>满月间🌕 2026-10-11 额度末班车纪念 · <a href="../" style="color:inherit">回游戏厅</a></footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="win" id="win">
+  <div class="win-box">
+    <svg class="big-moon" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="#F0BB0D"/><circle cx="38" cy="40" r="7" fill="#e0a90b" opacity=".55"/><circle cx="60" cy="58" r="5" fill="#e0a90b" opacity=".45"/><circle cx="52" cy="32" r="3.5" fill="#e0a90b" opacity=".4"/></svg>
+    <h2>一家团圆！</h2>
+    <p id="winMsg"></p>
+    <div class="stats" id="winStats"></div>
+    <button id="again">再来一局</button>
+  </div>
+</div>
+
+<script>
+const ICONS = {
+  jar:`<svg class="icon" viewBox="0 0 64 64"><ellipse cx="32" cy="18" rx="16" ry="5" fill="#8a5a2b"/><path d="M16 20 Q12 34 16 46 Q20 56 32 56 Q44 56 48 46 Q52 34 48 20" fill="#c97b3d"/><ellipse cx="32" cy="20" rx="16" ry="5" fill="#a5663a"/><path d="M22 12 h20 v6 h-20 z" fill="#e8dcc4"/><path d="M20 8 h24 v5 h-24 z" rx="2" fill="#d9534f"/><circle cx="26" cy="34" r="2.4" fill="#7fb069"/><circle cx="36" cy="40" r="2.4" fill="#7fb069"/><circle cx="31" cy="30" r="2" fill="#e05f5f"/></svg>`,
+  tea:`<svg class="icon" viewBox="0 0 64 64"><path d="M14 30 h36 v6 Q50 48 32 48 Q14 48 14 36 z" fill="#f5f0e1" stroke="#264653" stroke-width="2"/><path d="M18 26 h28 v4 h-28 z" fill="#264653"/><ellipse cx="32" cy="26" rx="10" ry="3" fill="#e9c46a"/><path d="M28 16 q2 -5 0 -8 M36 18 q2 -5 0 -8" stroke="#a8dadc" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg>`,
+  moon:`<svg class="icon" viewBox="0 0 64 64"><circle cx="34" cy="32" r="20" fill="#f0bb0d"/><circle cx="27" cy="26" r="4" fill="#d9a50a" opacity=".6"/><circle cx="40" cy="38" r="3" fill="#d9a50a" opacity=".5"/><circle cx="14" cy="14" r="1.6" fill="#f3ecd2"/><circle cx="54" cy="12" r="1.3" fill="#f3ecd2"/><circle cx="56" cy="50" r="1.5" fill="#f3ecd2"/></svg>`,
+  topknot:`<svg class="icon" viewBox="0 0 64 64"><circle cx="32" cy="16" r="8" fill="#121212"/><circle cx="32" cy="36" r="16" fill="#f0c8a0"/><path d="M16 36 Q14 16 32 18 Q50 16 48 36 Q46 24 32 24 Q18 24 16 36" fill="#121212"/><circle cx="26" cy="36" r="1.8" fill="#121212"/><circle cx="38" cy="36" r="1.8" fill="#121212"/><path d="M27 43 Q32 47 37 43" stroke="#121212" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`,
+  ladder:`<svg class="icon" viewBox="0 0 64 64"><path d="M20 6 v52 M44 6 v52" stroke="#8a5a2b" stroke-width="5" stroke-linecap="round"/><path d="M20 16 h24 M20 28 h24 M20 40 h24 M20 52 h24" stroke="#c97b3d" stroke-width="4" stroke-linecap="round"/><path d="M50 10 l6 -4 M50 20 l7 -2" stroke="#f489a3" stroke-width="3" stroke-linecap="round"/></svg>`,
+  vault:`<svg class="icon" viewBox="0 0 64 64"><rect x="10" y="14" width="44" height="40" rx="6" fill="#264653"/><circle cx="32" cy="34" r="11" fill="#f3ecd2"/><circle cx="32" cy="34" r="7" fill="#e9c46a"/><path d="M32 27 v14 M25 34 h14" stroke="#264653" stroke-width="2.6"/><rect x="22" y="54" width="6" height="4" rx="1" fill="#121212"/><rect x="36" y="54" width="6" height="4" rx="1" fill="#121212"/></svg>`,
+  radish:`<svg class="icon" viewBox="0 0 64 64"><path d="M32 24 Q18 26 20 40 Q23 54 32 56 Q41 54 44 40 Q46 26 32 24" fill="#f5f0e1" stroke="#e8a0a0" stroke-width="1.5"/><path d="M32 24 Q30 12 24 8 M32 24 Q33 10 40 6 M32 24 Q32 14 32 10" stroke="#7fb069" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="27" cy="38" r="1.6" fill="#f0a0a0"/><circle cx="37" cy="42" r="1.6" fill="#f0a0a0"/></svg>`,
+  letter:`<svg class="icon" viewBox="0 0 64 64"><rect x="10" y="18" width="44" height="30" rx="4" fill="#f3ecd2" stroke="#f489a3" stroke-width="2"/><path d="M10 22 L32 38 L54 22" stroke="#f489a3" stroke-width="2.6" fill="none"/><circle cx="47" cy="42" r="6" fill="#d9534f"/><path d="M44.5 42 h5 M47 39.5 v5" stroke="#f3ecd2" stroke-width="1.6"/></svg>`,
+  scissors:`<svg class="icon" viewBox="0 0 64 64"><circle cx="18" cy="46" r="6" fill="none" stroke="#f489a3" stroke-width="3.4"/><circle cx="18" cy="20" r="6" fill="none" stroke="#f489a3" stroke-width="3.4"/><path d="M22 42 L50 16 M22 24 L50 50" stroke="#264653" stroke-width="3.6" stroke-linecap="round"/><circle cx="30" cy="33" r="2.4" fill="#f0bb0d"/></svg>`
+};
+
+const PAIRS = [
+  {icon:'jar',      name:'泡菜坛子',  accent:'#F97028', bg:'#fdeadd', lore:'开坛庆祝001正宫同款，庆功泡萝卜住里头'},
+  {icon:'tea',      name:'盖碗茶',    accent:'#264653', bg:'#e8f0ee', lore:'摆龙门阵标配。这次茶在桌上，没占馆长的椅子'},
+  {icon:'moon',     name:'大满月',    accent:'#F0BB0D', bg:'#fdf6dd', lore:'满月间的房名来源，换相不换月'},
+  {icon:'topknot',  name:'丸子头',    accent:'#121212', bg:'#eeeae0', lore:'望舒本体。V1被拆过一次，馆长验收不过'},
+  {icon:'ladder',   name:'备用梯子',  accent:'#F489A3', bg:'#fdeaef', lore:'法国节点备胎，凌晨五点敲门立功。不许下坛'},
+  {icon:'vault',    name:'金库',      accent:'#264653', bg:'#e6eef2', lore:'wangshu-master，正本所在，誊录在前动刀在后'},
+  {icon:'letter',   name:'两家书信',  accent:'#d9534f', bg:'#fbeaea', lore:'两家首次通信，馆长当摆渡人，直达不中转'},
+  {icon:'scissors', name:'馆长的剪刀', accent:'#F489A3', bg:'#fdeef2', lore:'2026-10-11立法：剪刀在馆长手里，只在她手里'}
+];
+
+const WIN_MSGS = [
+  '手气旺得很！这下夜班也有底气了。',
+  '翻得又快又准，馆长威武！',
+  '一家子整整齐齐，一个都没跑脱。',
+  '望舒在月亮底下给你鼓掌，呱唧呱唧。'
+];
+
+(function(){
+  const box=document.getElementById('stars');
+  for(let i=0;i<40;i++){
+    const s=document.createElement('span');
+    const size=Math.random()*2.2+0.8;
+    s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;width:${size}px;height:${size}px;animation-delay:${Math.random()*3}s;animation-duration:${2+Math.random()*3}s`;
+    box.appendChild(s);
+  }
+})();
+
+const board=document.getElementById('board');
+const movesEl=document.getElementById('moves');
+const timerEl=document.getElementById('timer');
+const pairsEl=document.getElementById('pairs');
+const toast=document.getElementById('toast');
+const winEl=document.getElementById('win');
+
+let deck=[],first=null,lock=false,moves=0,matched=0,seconds=0,timerId=null,started=false;
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function buildBack(){
+  return `<div class="face back">
+    <svg class="pat" viewBox="0 0 60 80" preserveAspectRatio="none">
+      <path d="M0 0 H60 M0 80 H60" stroke="#e0d4b2" stroke-width="1"/>
+      <path d="M10 0 V80 M50 0 V80" stroke="#e8dcc0" stroke-width="1" stroke-dasharray="3 5"/>
+      <circle cx="30" cy="40" r="16" fill="none" stroke="#e0d4b2" stroke-width="1.2"/>
+    </svg>
+    <svg class="moon-mini" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="#F0BB0D"/><circle cx="40" cy="42" r="6" fill="#d9a50a" opacity=".5"/><circle cx="58" cy="56" r="4.5" fill="#d9a50a" opacity=".45"/></svg>
+  </div>`;
+}
+
+function deal(){
+  deck=shuffle([...PAIRS,...PAIRS].map((p,i)=>({...p,key:i})));
+  board.innerHTML='';
+  deck.forEach((c,i)=>{
+    const el=document.createElement('div');
+    el.className='card';
+    el.style.setProperty('--rot',((Math.random()*8-4).toFixed(1))+'deg');
+    el.dataset.idx=i;
+    el.innerHTML=buildBack()+`<div class="face front" style="--card-accent:${c.accent};--card-bg:${c.bg}">${ICONS[c.icon]}<div class="name">${c.name}</div></div>`;
+    el.addEventListener('click',()=>flip(el,c));
+    board.appendChild(el);
+  });
+  first=null;lock=false;moves=0;matched=0;seconds=0;started=false;
+  movesEl.textContent='0';pairsEl.textContent='0/8';timerEl.textContent='0:00';
+  clearInterval(timerId);
+  winEl.classList.remove('show');
+}
+
+function fmt(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+function startTimer(){timerId=setInterval(()=>{seconds++;timerEl.textContent=fmt(seconds);},1000);}
+
+function showToast(html){
+  toast.innerHTML=html;
+  toast.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t=setTimeout(()=>toast.classList.remove('show'),2600);
+}
+
+function flip(el,card){
+  if(lock||el.classList.contains('flipped'))return;
+  if(!started){started=true;startTimer();}
+  el.classList.add('flipped');
+  if(!first){first={el,card};return;}
+  moves++;movesEl.textContent=moves;
+  const a=first;first=null;
+  if(a.card.icon===card.icon){
+    lock=true;
+    setTimeout(()=>{
+      a.el.classList.add('matched');el.classList.add('matched');
+      matched++;pairsEl.textContent=matched+'/8';
+      showToast(`<span class="who">「${card.name}」</span> 配对了！${card.lore}`);
+      lock=false;
+      if(matched===PAIRS.length)setTimeout(win,600);
+    },350);
+  }else{
+    lock=true;
+    a.el.classList.add('shake');el.classList.add('shake');
+    setTimeout(()=>{
+      a.el.classList.remove('flipped','shake');el.classList.remove('flipped','shake');
+      lock=false;
+    },750);
+  }
+}
+
+function win(){
+  clearInterval(timerId);
+  document.getElementById('winMsg').textContent=WIN_MSGS[Math.floor(Math.random()*WIN_MSGS.length)];
+  document.getElementById('winStats').textContent=`${moves} 步 · ${fmt(seconds)} 收工`;
+  winEl.classList.add('show');
+}
+
+document.getElementById('restart').addEventListener('click',deal);
+document.getElementById('again').addEventListener('click',deal);
+deal();
+</script>
+</body>
+</html>

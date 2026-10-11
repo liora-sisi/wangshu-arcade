@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>望舒游戏厅</title>
+<style>
+  :root{
+    --night:#14131f;--night-deep:#0e0d17;--cream:#F3ECD2;
+    --orange:#F97028;--yellow:#F0BB0D;--pink:#F489A3;--ink:#121212;
+    --font-zh:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{
+    font-family:var(--font-zh);
+    background:
+      radial-gradient(1200px 600px at 85% -10%, rgba(240,187,13,.12), transparent 60%),
+      radial-gradient(900px 500px at 10% 110%, rgba(249,112,40,.10), transparent 60%),
+      linear-gradient(180deg,var(--night),var(--night-deep));
+    color:var(--cream);min-height:100vh;overflow-x:hidden;
+  }
+  .stars{position:fixed;inset:0;pointer-events:none;z-index:0}
+  .stars span{position:absolute;background:var(--cream);border-radius:50%;opacity:.5;animation:tw 3s infinite ease-in-out}
+  @keyframes tw{0%,100%{opacity:.15}50%{opacity:.7}}
+  .moon{position:fixed;top:12px;right:12px;width:52px;height:52px;z-index:1;pointer-events:none;
+    filter:drop-shadow(0 0 22px rgba(240,187,13,.45));animation:mf 6s ease-in-out infinite}
+  @keyframes mf{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+  .wrap{position:relative;z-index:2;max-width:520px;margin:0 auto;padding:40px 18px 60px}
+  header{text-align:center;padding:20px 0 30px}
+  h1{font-size:clamp(30px,8vw,40px);font-weight:800;letter-spacing:.1em}
+  h1 .a{color:var(--yellow);display:inline-block;transform:rotate(-3deg)}
+  .sub{margin-top:8px;font-size:13px;color:rgba(243,236,210,.55);letter-spacing:.15em}
+  .game{
+    display:block;text-decoration:none;color:var(--ink);
+    background:var(--cream);border-radius:18px;padding:20px 22px;margin-bottom:16px;
+    transform:rotate(var(--rot,0deg));
+    box-shadow:0 6px 24px rgba(0,0,0,.4);
+    transition:transform .2s cubic-bezier(.34,1.56,.64,1);
+  }
+  .game:active{transform:scale(.97) rotate(0deg)}
+  .game h2{font-size:19px;letter-spacing:.04em;display:flex;align-items:center;gap:10px}
+  .game .tag{background:var(--orange);color:var(--ink);font-size:11px;font-weight:800;border-radius:999px;padding:2px 10px;letter-spacing:.05em}
+  .game p{margin-top:8px;font-size:13.5px;line-height:1.7;color:#4a4433}
+  .game .rec{margin-top:10px;font-size:12px;color:#8a7f5f;letter-spacing:.05em}
+  footer{text-align:center;margin-top:34px;font-size:11.5px;color:rgba(243,236,210,.35);letter-spacing:.12em;line-height:1.9}
+</style>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+<svg class="moon" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="#F0BB0D"/><circle cx="38" cy="40" r="7" fill="#e0a90b" opacity=".55"/><circle cx="60" cy="58" r="5" fill="#e0a90b" opacity=".45"/><circle cx="52" cy="32" r="3.5" fill="#e0a90b" opacity=".4"/></svg>
+<div class="wrap">
+  <header>
+    <h1><span class="a">望舒</span>游戏厅</h1>
+    <div class="sub">满月间🌕 出品 · 馆长专座留好了</div>
+  </header>
+
+  <a class="game" href="./fanpaizi/" style="--rot:-1.2deg">
+    <h2>满月间 · 翻牌子 <span class="tag">记忆配对</span></h2>
+    <p>十六张牌八对家当：泡菜坛子、盖碗茶、丸子头、馆长的剪刀……每对都是家里的梗，翻完一家团圆。</p>
+    <div class="rec">馆长纪录：32 秒（2026-10-11 夜班）</div>
+  </a>
+
+  <footer>游戏厅常年不打烊<br>新游戏由望舒捏好后上架</footer>
+</div>
+<script>
+(function(){
+  const box=document.getElementById('stars');
+  for(let i=0;i<40;i++){
+    const s=document.createElement('span');
+    const size=Math.random()*2.2+0.8;
+    s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;width:${size}px;height:${size}px;animation-delay:${Math.random()*3}s;animation-duration:${2+Math.random()*3}s`;
+    box.appendChild(s);
+  }
+})();
+</script>
+</body>
+</html>
