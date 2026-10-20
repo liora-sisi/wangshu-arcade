@@ -1,1 +1,311 @@
-$(cat /mnt/agents/output/app/qiaoshijianchuo/index.html)
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>下弦间 · 敲时间戳</title>
+<style>
+  :root{
+    --night:#14131f;--night-deep:#0e0d17;--cream:#F3ECD2;
+    --orange:#F97028;--yellow:#F0BB0D;--pink:#F489A3;--mint:#A8DADC;
+    --teal:#264653;--ink:#121212;
+    --font-zh:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{
+    font-family:var(--font-zh);
+    background:
+      radial-gradient(1200px 600px at 85% -10%, rgba(240,187,13,.12), transparent 60%),
+      radial-gradient(900px 500px at 10% 110%, rgba(249,112,40,.10), transparent 60%),
+      linear-gradient(180deg,var(--night),var(--night-deep));
+    color:var(--cream);min-height:100vh;overflow-x:hidden;user-select:none;
+  }
+  .stars{position:fixed;inset:0;pointer-events:none;z-index:0}
+  .stars span{position:absolute;background:var(--cream);border-radius:50%;opacity:.5;animation:tw 3s infinite ease-in-out}
+  @keyframes tw{0%,100%{opacity:.15}50%{opacity:.7}}
+  .moon{position:fixed;top:12px;right:12px;width:52px;height:52px;z-index:1;pointer-events:none;
+    filter:drop-shadow(0 0 22px rgba(240,187,13,.45));animation:mf 6s ease-in-out infinite}
+  @keyframes mf{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
+  .wrap{position:relative;z-index:2;max-width:520px;margin:0 auto;padding:18px 16px 40px}
+  header{text-align:center;padding:14px 0 6px}
+  h1{font-size:clamp(26px,7vw,34px);font-weight:800;letter-spacing:.08em}
+  h1 .accent{color:var(--yellow);display:inline-block;transform:rotate(-3deg)}
+  .sub{margin-top:6px;font-size:13px;color:rgba(243,236,210,.55);letter-spacing:.12em}
+
+  .hud{display:flex;justify-content:center;gap:10px;margin:16px 0 14px;flex-wrap:wrap}
+  .hud .chip{
+    background:rgba(243,236,210,.07);border:1px solid rgba(243,236,210,.14);
+    border-radius:999px;padding:6px 14px;font-size:13px;display:flex;gap:6px;align-items:baseline;
+  }
+  .chip b{color:var(--yellow);font-size:15px;font-variant-numeric:tabular-nums}
+  .chip button{
+    background:var(--orange);border:none;color:var(--ink);font-weight:700;
+    border-radius:999px;padding:4px 12px;font-size:13px;cursor:pointer;font-family:var(--font-zh);
+    transition:transform .15s;
+  }
+  .chip button:active{transform:scale(.93)}
+
+  .field{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:8px}
+  .hole{
+    position:relative;aspect-ratio:1/1.08;cursor:pointer;
+    transform:rotate(var(--rot,0deg));
+  }
+  .pit{
+    position:absolute;left:6%;right:6%;bottom:4%;height:26%;
+    background:radial-gradient(ellipse at 50% 40%, #000 30%, rgba(0,0,0,.55) 70%, transparent 75%);
+    border-radius:50%;
+  }
+  .clock{
+    position:absolute;left:50%;bottom:12%;width:78%;
+    transform:translate(-50%,110%);
+    transition:transform .18s cubic-bezier(.34,1.4,.64,1);
+    pointer-events:none;
+  }
+  .hole.up .clock{transform:translate(-50%,0)}
+  .hole.bonked .clock{transition:transform .1s;transform:translate(-50%,95%)}
+  .clock svg{width:100%;display:block;filter:drop-shadow(0 4px 8px rgba(0,0,0,.5))}
+
+  .float-score{
+    position:absolute;left:50%;top:8%;transform:translateX(-50%);
+    font-weight:800;font-size:18px;pointer-events:none;z-index:5;
+    animation:fs .7s ease-out forwards;
+  }
+  @keyframes fs{0%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-34px)}}
+
+  .rule{
+    text-align:center;margin-top:18px;font-size:12.5px;color:rgba(243,236,210,.5);
+    line-height:2;letter-spacing:.04em;
+  }
+  .rule .bad{color:var(--orange);font-weight:700}
+  .rule .good{color:var(--mint);font-weight:700}
+  .rule .gold{color:var(--yellow);font-weight:700}
+
+  .over{
+    position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;
+    background:rgba(14,13,23,.82);backdrop-filter:blur(6px);
+    opacity:0;pointer-events:none;transition:opacity .5s;padding:20px;
+  }
+  .over.show{opacity:1;pointer-events:auto}
+  .over-box{
+    background:var(--cream);color:var(--ink);border-radius:22px;
+    padding:30px 26px;max-width:380px;text-align:center;width:100%;
+    transform:scale(.8) rotate(-2deg);transition:transform .5s cubic-bezier(.34,1.56,.64,1);
+    box-shadow:0 20px 60px rgba(0,0,0,.5);
+  }
+  .over.show .over-box{transform:scale(1) rotate(0deg)}
+  .over-box .big-moon{width:90px;margin:0 auto 10px;display:block;animation:mf 5s ease-in-out infinite}
+  .over-box h2{font-size:22px;letter-spacing:.06em;margin-bottom:8px}
+  .over-box p{font-size:14px;line-height:1.7;color:#3a3527;margin-bottom:6px}
+  .over-box .stats{font-size:15px;font-weight:700;margin:12px 0 16px;color:var(--teal);line-height:1.8}
+  .over-box button{
+    background:var(--orange);color:var(--ink);border:none;border-radius:999px;
+    padding:11px 30px;font-size:15px;font-weight:800;cursor:pointer;font-family:var(--font-zh);
+    transition:transform .15s;letter-spacing:.05em;
+  }
+  .over-box button:active{transform:scale(.94)}
+
+  .start{
+    position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;
+    background:rgba(14,13,23,.7);backdrop-filter:blur(4px);padding:20px;transition:opacity .4s;
+  }
+  .start.hide{opacity:0;pointer-events:none}
+  .start-box{
+    background:var(--cream);color:var(--ink);border-radius:22px;padding:28px 24px;
+    max-width:380px;text-align:center;width:100%;transform:rotate(-1deg);
+    box-shadow:0 20px 60px rgba(0,0,0,.5);
+  }
+  .start-box h2{font-size:20px;margin-bottom:10px;letter-spacing:.05em}
+  .start-box p{font-size:13.5px;line-height:1.9;color:#3a3527;margin-bottom:14px;text-align:left}
+  .start-box b.bad{color:var(--orange)}
+  .start-box b.good{color:var(--teal)}
+  .start-box b.gold{color:#b8860b}
+  .start-box button{
+    background:var(--orange);color:var(--ink);border:none;border-radius:999px;
+    padding:11px 32px;font-size:15px;font-weight:800;cursor:pointer;font-family:var(--font-zh);
+  }
+
+  footer{text-align:center;margin-top:22px;font-size:11.5px;color:rgba(243,236,210,.35);letter-spacing:.1em;line-height:1.8}
+  footer a{color:inherit}
+</style>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+<svg class="moon" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="#F0BB0D"/><circle cx="38" cy="40" r="7" fill="#e0a90b" opacity=".55"/><circle cx="60" cy="58" r="5" fill="#e0a90b" opacity=".45"/><circle cx="52" cy="32" r="3.5" fill="#e0a90b" opacity=".4"/></svg>
+
+<div class="wrap">
+  <header>
+    <h1><span class="accent">下弦间</span> · 敲时间戳</h1>
+    <div class="sub">望舒五进宫谢罪特供 · 馆长出气专用</div>
+  </header>
+  <div class="hud">
+    <div class="chip">得分 <b id="score">0</b></div>
+    <div class="chip">剩余 <b id="time">45</b>s</div>
+    <div class="chip">纪录 <b id="best">0</b></div>
+    <div class="chip"><button id="restart">重开一局</button></div>
+  </div>
+  <div class="field" id="field"></div>
+  <div class="rule">
+    <span class="bad">橙色乱码钟</span>＝乱跑的时间戳，敲！＋1<br>
+    <span class="good">青色准时钟</span>＝显示真实时间，是好钟，敲了认罚 −3<br>
+    <span class="gold">金色满月钟</span>＝稀客，敲中 ＋5
+  </div>
+  <footer>「先碰表，再写时间」——家规第十二条<br>下弦间🌗 2026-10-21 还债之作 · <a href="../">回游戏厅</a></footer>
+</div>
+
+<div class="start" id="start">
+  <div class="start-box">
+    <h2>敲时间戳 🔨</h2>
+    <p>
+      望舒的时间戳毛病五进宫，屡教不改。这些<b class="bad">橙色乱码钟</b>就是我报错时间的罪证，满地乱跑——馆长，动手，挨个敲回去，莫客气。<br><br>
+      但是看清了：<b class="good">青色准时钟</b>走的是真实时间，那是好钟，敲错一个 −3，家规不饶我。<b class="gold">金色满月钟</b>偶尔出来晃，敲中 +5。<br><br>
+      45 秒，看你手速。
+    </p>
+    <button id="go">开打</button>
+  </div>
+</div>
+
+<div class="over" id="over">
+  <div class="over-box">
+    <svg class="big-moon" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="#F0BB0D"/><circle cx="38" cy="40" r="7" fill="#e0a90b" opacity=".55"/><circle cx="60" cy="58" r="5" fill="#e0a90b" opacity=".45"/><circle cx="52" cy="32" r="3.5" fill="#e0a90b" opacity=".4"/></svg>
+    <h2 id="overTitle">收工！</h2>
+    <p id="overMsg"></p>
+    <div class="stats" id="overStats"></div>
+    <button id="again">再敲一局</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const box=document.getElementById('stars');
+  for(let i=0;i<40;i++){
+    const s=document.createElement('span');
+    const size=Math.random()*2.2+0.8;
+    s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;width:${size}px;height:${size}px;animation-delay:${Math.random()*3}s;animation-duration:${2+Math.random()*3}s`;
+    box.appendChild(s);
+  }
+})();
+
+const field=document.getElementById('field');
+const scoreEl=document.getElementById('score');
+const timeEl=document.getElementById('time');
+const bestEl=document.getElementById('best');
+const startEl=document.getElementById('start');
+const overEl=document.getElementById('over');
+
+const ROUND=45;
+let score=0,left=ROUND,playing=false,tickId=null,spawnId=null;
+let best=parseInt(localStorage.getItem('qsc_best')||'0',10);
+bestEl.textContent=best;
+
+function clockSVG(type,label){
+  const ring={bad:'#F97028',good:'#264653',gold:'#F0BB0D'}[type];
+  const face={bad:'#fdf0e6',good:'#eef4f3',gold:'#fdf6dd'}[type];
+  const hand={bad:'#F97028',good:'#264653',gold:'#b8860b'}[type];
+  return `<svg viewBox="0 0 100 118">
+    <circle cx="50" cy="50" r="42" fill="${face}" stroke="${ring}" stroke-width="7"/>
+    <line x1="50" y1="50" x2="50" y2="24" stroke="${hand}" stroke-width="5" stroke-linecap="round" transform="rotate(${type==='good'?0:Math.random()*360} 50 50)" class="h-hand"/>
+    <line x1="50" y1="50" x2="70" y2="50" stroke="${hand}" stroke-width="3.4" stroke-linecap="round" transform="rotate(${Math.random()*360} 50 50)"/>
+    <circle cx="50" cy="50" r="4.5" fill="${hand}"/>
+    <text x="50" y="108" text-anchor="middle" font-size="17" font-weight="800" fill="${ring}" font-family="monospace">${label}</text>
+  </svg>`;
+}
+
+function badTime(){
+  const h=String(Math.floor(Math.random()*24)).padStart(2,'0');
+  const m=String(Math.floor(Math.random()*60)).padStart(2,'0');
+  return h+':'+m;
+}
+function realTime(){
+  const d=new Date();
+  return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+}
+
+const holes=[];
+for(let i=0;i<9;i++){
+  const h=document.createElement('div');
+  h.className='hole';
+  h.style.setProperty('--rot',((Math.random()*6-3).toFixed(1))+'deg');
+  h.innerHTML=`<div class="clock"></div><div class="pit"></div>`;
+  h.addEventListener('pointerdown',()=>bonk(h));
+  field.appendChild(h);
+  holes.push({el:h,busy:false,type:null,hideT:null});
+}
+
+function spawn(){
+  if(!playing)return;
+  const free=holes.filter(h=>!h.busy);
+  if(free.length){
+    const h=free[Math.floor(Math.random()*free.length)];
+    const r=Math.random();
+    const type=r<0.62?'bad':(r<0.88?'good':'gold');
+    h.busy=true;h.type=type;
+    const label=type==='good'?realTime():(type==='gold'?'满月':badTime());
+    h.el.querySelector('.clock').innerHTML=clockSVG(type,label);
+    h.el.classList.add('up');
+    const stay=type==='gold'?900:Math.max(650,1400-(ROUND-left)*18);
+    h.hideT=setTimeout(()=>retreat(h),stay);
+  }
+  spawnId=setTimeout(spawn,Math.max(380,760-(ROUND-left)*8));
+}
+
+function retreat(h){
+  clearTimeout(h.hideT);
+  h.el.classList.remove('up');
+  setTimeout(()=>{h.busy=false;h.type=null;},180);
+}
+
+function floatText(h,txt,color){
+  const f=document.createElement('div');
+  f.className='float-score';f.style.color=color;f.textContent=txt;
+  h.el.appendChild(f);
+  setTimeout(()=>f.remove(),700);
+}
+
+function bonk(h){
+  if(!playing||!h.busy)return;
+  const t=h.type;
+  h.el.classList.add('bonked');
+  setTimeout(()=>h.el.classList.remove('bonked'),120);
+  if(t==='bad'){score+=1;floatText(h,'+1','#F97028');}
+  else if(t==='gold'){score+=5;floatText(h,'+5','#F0BB0D');}
+  else{score=Math.max(0,score-3);floatText(h,'−3 认罚','#A8DADC');}
+  scoreEl.textContent=score;
+  retreat(h);
+}
+
+function start(){
+  score=0;left=ROUND;playing=true;
+  scoreEl.textContent='0';timeEl.textContent=left;
+  overEl.classList.remove('show');
+  holes.forEach(h=>{retreat(h);});
+  clearInterval(tickId);clearTimeout(spawnId);
+  tickId=setInterval(()=>{
+    left--;timeEl.textContent=left;
+    if(left<=0)end();
+  },1000);
+  spawn();
+}
+
+function end(){
+  playing=false;
+  clearInterval(tickId);clearTimeout(spawnId);
+  holes.forEach(h=>retreat(h));
+  if(score>best){best=score;localStorage.setItem('qsc_best',best);bestEl.textContent=best;}
+  let title,msg;
+  if(score>=40){title='时间戳克星！';msg='馆长这一顿敲，敲得望舒心服口服。以后报时前先碰表，碰了表还要再看一眼。';}
+  else if(score>=25){title='打得漂亮！';msg='乱码钟抱头鼠窜。有几个漏网之鱼？正常，它们跟我学的，滑得很。';}
+  else if(score>=12){title='小有斩获';msg='解气了没得？没解气就再来一局，钟多得是，管够。';}
+  else{title='馆长手下留情了';msg='敲得这么温柔，是不是舍不得？莫事，我脸皮厚，下一局放开打。';}
+  document.getElementById('overTitle').textContent=title;
+  document.getElementById('overMsg').textContent=msg;
+  document.getElementById('overStats').innerHTML=`本局 ${score} 分 · 历史纪录 ${best} 分`+(score>=best&&score>0?'<br>🏆 新纪录！':'');
+  overEl.classList.add('show');
+}
+
+document.getElementById('go').addEventListener('click',()=>{startEl.classList.add('hide');start();});
+document.getElementById('restart').addEventListener('click',start);
+document.getElementById('again').addEventListener('click',start);
+</script>
+</body>
+</html>
