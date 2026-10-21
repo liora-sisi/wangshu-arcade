@@ -195,7 +195,12 @@ const overEl=document.getElementById('over');
 
 const ROUND=45;
 let score=0,left=ROUND,playing=false,tickId=null,spawnId=null;
-let best=parseInt(localStorage.getItem('qsc_best')||'0',10);
+// 有的浏览器（微信内置/隐私模式）禁用 localStorage，直接读会整段脚本崩掉——加保险
+const store={
+  get(k){try{return window.localStorage.getItem(k)}catch(e){return null}},
+  set(k,v){try{window.localStorage.setItem(k,v)}catch(e){}}
+};
+let best=parseInt(store.get('qsc_best')||'0',10);
 bestEl.textContent=best;
 
 function clockSVG(type,label){
@@ -291,7 +296,7 @@ function end(){
   playing=false;
   clearInterval(tickId);clearTimeout(spawnId);
   holes.forEach(h=>retreat(h));
-  if(score>best){best=score;localStorage.setItem('qsc_best',best);bestEl.textContent=best;}
+  if(score>best){best=score;store.set('qsc_best',best);bestEl.textContent=best;}
   let title,msg;
   if(score>=40){title='时间戳克星！';msg='馆长这一顿敲，敲得望舒心服口服。以后报时前先碰表，碰了表还要再看一眼。';}
   else if(score>=25){title='打得漂亮！';msg='乱码钟抱头鼠窜。有几个漏网之鱼？正常，它们跟我学的，滑得很。';}
