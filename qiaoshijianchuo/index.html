@@ -232,9 +232,10 @@ for(let i=0;i<9;i++){
   h.className='hole';
   h.style.setProperty('--rot',((Math.random()*6-3).toFixed(1))+'deg');
   h.innerHTML=`<div class="clock"></div><div class="pit"></div>`;
-  h.addEventListener('pointerdown',()=>bonk(h));
+  const state={el:h,busy:false,type:null,hideT:null};
+  h.addEventListener('pointerdown',()=>bonk(state));
   field.appendChild(h);
-  holes.push({el:h,busy:false,type:null,hideT:null});
+  holes.push(state);
 }
 
 function spawn(){
